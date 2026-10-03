@@ -175,8 +175,6 @@ def _validated_decision_value(value: float, field: str, *, allow_zero: bool) -> 
         code = {
             "base_wholesale_value": "invalid_base_wholesale_value",
             "copart_expected_gross": "invalid_copart_expected_gross",
-            "acv_costs": "invalid_acv_costs",
-            "copart_costs": "invalid_copart_costs",
             "minimum_switch_advantage": "invalid_minimum_switch_advantage",
         }[field]
         qualifier = "nonnegative" if allow_zero else "greater than zero"
@@ -207,8 +205,6 @@ def decision_analyze(
     audio_file: UploadFile = File(...),
     base_wholesale_value: float = Form(...),
     copart_expected_gross: float = Form(...),
-    acv_costs: float = Form(0),
-    copart_costs: float = Form(0),
     minimum_switch_advantage: float = Form(500),
 ) -> DecisionResponse:
     normalized_vehicle_id = _validated_vehicle_id(vehicle_id)
@@ -217,10 +213,6 @@ def decision_analyze(
     )
     copart_expected_gross = _validated_decision_value(
         copart_expected_gross, "copart_expected_gross", allow_zero=True
-    )
-    acv_costs = _validated_decision_value(acv_costs, "acv_costs", allow_zero=True)
-    copart_costs = _validated_decision_value(
-        copart_costs, "copart_costs", allow_zero=True
     )
     minimum_switch_advantage = _validated_decision_value(
         minimum_switch_advantage, "minimum_switch_advantage", allow_zero=True
@@ -239,8 +231,6 @@ def decision_analyze(
                 vehicle_id=normalized_vehicle_id,
                 base_wholesale_value=base_wholesale_value,
                 copart_expected_gross=copart_expected_gross,
-                acv_costs=acv_costs,
-                copart_costs=copart_costs,
                 minimum_switch_advantage=minimum_switch_advantage,
             )
         except ModelNotReadyError as error:

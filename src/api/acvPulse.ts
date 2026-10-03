@@ -22,8 +22,6 @@ export async function analyzeDecision(
   form.append('audio_file', audioFile, audioFile.name);
   form.append('base_wholesale_value', String(economics.baseWholesaleValue));
   form.append('copart_expected_gross', String(economics.copartExpectedGross));
-  form.append('acv_costs', String(economics.acvCosts));
-  form.append('copart_costs', String(economics.copartCosts));
   form.append('minimum_switch_advantage', String(economics.minimumSwitchAdvantage));
 
   let response: Response;

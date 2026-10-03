@@ -29,8 +29,6 @@ def _parse_arguments(argv: Optional[Sequence[str]] = None) -> argparse.Namespace
     parser.add_argument("--audio", required=True, type=Path, help="engine WAV file")
     parser.add_argument("--base-wholesale", required=True, type=float)
     parser.add_argument("--copart-gross", required=True, type=float)
-    parser.add_argument("--acv-costs", type=float, default=0)
-    parser.add_argument("--copart-costs", type=float, default=0)
     parser.add_argument("--minimum-switch-advantage", type=float, default=500)
     parser.add_argument("--json", action="store_true", help="emit decision JSON")
     return parser.parse_args(argv)
@@ -58,10 +56,9 @@ def _print_decision(result) -> None:
     print()
     print(f"{'Base Wholesale Value':<28}{_currency(result.valuation.base_wholesale_value)}")
     print(f"{'Acoustic Value Delta':<28}{_signed_currency(result.valuation.acoustic_delta_amount)}")
-    print(f"{'Adjusted ACV Value':<28}{_currency(result.valuation.adjusted_wholesale_value)}")
     print()
-    print(f"{'ACV Expected Net':<28}{_currency(result.economics.acv_expected_net)}")
-    print(f"{'Copart Expected Net':<28}{_currency(result.economics.copart_expected_net)}")
+    print(f"{'Adjusted ACV Value':<28}{_currency(result.economics.acv_expected_value)}")
+    print(f"{'Copart Expected Value':<28}{_currency(result.economics.copart_expected_value)}")
     print()
     print(f"RECOMMENDED CHANNEL         {result.decision.recommended_channel}")
     print()
@@ -92,8 +89,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             vehicle_id=vehicle_id,
             base_wholesale_value=args.base_wholesale,
             copart_expected_gross=args.copart_gross,
-            acv_costs=args.acv_costs,
-            copart_costs=args.copart_costs,
             minimum_switch_advantage=args.minimum_switch_advantage,
         )
     except ModelNotReadyError as error:

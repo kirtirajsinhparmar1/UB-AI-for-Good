@@ -21,11 +21,9 @@ The interactive API schema is available at `/docs`.
 | `audio_file` | WAV file | yes | Engine audio recording |
 | `base_wholesale_value` | number | yes | Starting ACV wholesale estimate; must be greater than zero |
 | `copart_expected_gross` | number | yes | Copart gross estimate supplied by the caller |
-| `acv_costs` | number | no | Defaults to `0` |
-| `copart_costs` | number | no | Defaults to `0` |
 | `minimum_switch_advantage` | number | no | Defaults to `500` |
 
-The response contains `acoustic`, `valuation`, `economics`, and `decision` objects. `acoustic_knock_score` is a 0–100 score, not a calibrated probability. `valuation.acoustic_delta_pct` is a fractional rate (for example, `0.00325` means a `0.325%` adjustment). The bundled policy is always identified as `prototype_demo_policy`; it is illustrative and requires empirical calibration before production use. `economics.net_difference` is Copart net minus ACV net. `decision.recommended_channel` is `ACV`, `COPART`, or `REVIEW`; `decision_strength` describes the configured net-margin rule, not statistical confidence.
+The response contains `acoustic`, `valuation`, `economics`, and `decision` objects. `acoustic_knock_score` is a 0–100 score, not a calibrated probability. `valuation.acoustic_delta_pct` is a fractional rate (for example, `0.00325` means a `0.325%` adjustment). The bundled policy is always identified as `prototype_demo_policy`; it is illustrative and requires empirical calibration before production use. Economics compares Adjusted ACV Value (`economics.acv_expected_value`) with Copart Expected Value (`economics.copart_expected_value`) directly. `economics.value_difference` is Copart minus ACV. `decision.recommended_channel` is `ACV`, `COPART`, or `REVIEW`; `decision_strength` describes the configured value-margin rule, not statistical confidence.
 
 Example request:
 
@@ -34,9 +32,8 @@ curl -X POST http://localhost:8000/v1/decision/analyze \
   -F 'vehicle_id=vehicle-a' \
   -F 'audio_file=@backend/demo/sample_audio/car_clean_0006.wav;type=audio/wav' \
   -F 'base_wholesale_value=15000' \
-  -F 'copart_expected_gross=11000' \
-  -F 'acv_costs=500' \
-  -F 'copart_costs=700'
+  -F 'copart_expected_gross=14200' \
+  -F 'minimum_switch_advantage=500'
 ```
 
 Example JSON response:
@@ -59,19 +56,15 @@ Example JSON response:
     "policy_note": "Illustrative hackathon policy. Replace with empirically calibrated ACV/Copart historical outcomes in production."
   },
   "economics": {
-    "acv_expected_gross": 15048.75,
-    "acv_costs": 500,
-    "acv_expected_net": 14548.75,
-    "copart_expected_gross": 11000,
-    "copart_costs": 700,
-    "copart_expected_net": 10300,
-    "net_difference": -4248.75
+    "acv_expected_value": 15048.75,
+    "copart_expected_value": 14200,
+    "value_difference": -848.75
   },
   "decision": {
     "recommended_channel": "ACV",
     "decision_strength": "strong",
     "minimum_switch_advantage": 500,
-    "rationale": "ACV expected net exceeds Copart expected net by $4,248.75, meeting the $500 routing threshold."
+    "rationale": "Adjusted ACV value exceeds Copart expected value by $848.75, meeting the $500 routing threshold."
   },
   "disclaimer": "Prototype economic policy for hackathon demonstration; production values require empirical calibration."
 }

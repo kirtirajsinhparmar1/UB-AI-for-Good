@@ -27,7 +27,7 @@ Vite exposes this value at build time. Restart the dev server after changing it.
 
 ## Demo flow
 
-The Clean Engine Sample and Knocking Engine Sample buttons submit the real WAVs in `public/demo/` to `POST /v1/decision/analyze`. Both begin with the same editable economics: $15,000 base wholesale value, $14,200 Copart expected gross, $500 ACV costs, $700 Copart costs and a $500 minimum switch advantage. Upload accepts WAV files; live microphone capture is not enabled in this demo.
+The Clean Engine Sample and Knocking Engine Sample buttons submit the real WAVs in `public/demo/` to `POST /v1/decision/analyze`. Both begin with the same editable economics: $15,000 base wholesale value, $14,200 Copart expected gross and a $500 minimum switch advantage. Routing compares Adjusted ACV Value vs Copart Expected Value directly. Upload accepts WAV files; live microphone capture is not enabled in this demo.
 
 The acoustic knock score is a model score, not a calibrated probability or mechanical diagnosis. **Prototype economic policy for hackathon demonstration.** The displayed value adjustment is not ACV's current production pricing policy.
 

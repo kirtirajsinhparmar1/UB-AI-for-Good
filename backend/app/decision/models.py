@@ -25,14 +25,10 @@ class DecisionValuation(BaseModel):
 
 
 class DecisionEconomics(BaseModel):
-    acv_expected_gross: float = Field(..., ge=0)
-    acv_costs: float = Field(..., ge=0)
-    acv_expected_net: float
-    copart_expected_gross: float = Field(..., ge=0)
-    copart_costs: float = Field(..., ge=0)
-    copart_expected_net: float
-    # Positive values mean Copart has the higher expected net; negative means ACV.
-    net_difference: float
+    acv_expected_value: float = Field(..., ge=0)
+    copart_expected_value: float = Field(..., ge=0)
+    # Positive values mean Copart has the higher expected value; negative means ACV.
+    value_difference: float
 
 
 class DecisionRecommendation(BaseModel):

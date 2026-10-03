@@ -10,8 +10,6 @@ export interface Vehicle {
 export interface EconomicInputs {
   baseWholesaleValue: number;
   copartExpectedGross: number;
-  acvCosts: number;
-  copartCosts: number;
   minimumSwitchAdvantage: number;
 }
 
@@ -32,13 +30,9 @@ export interface DecisionResponse {
     policy_note: string;
   };
   economics: {
-    acv_expected_gross: number;
-    acv_costs: number;
-    acv_expected_net: number;
-    copart_expected_gross: number;
-    copart_costs: number;
-    copart_expected_net: number;
-    net_difference: number;
+    acv_expected_value: number;
+    copart_expected_value: number;
+    value_difference: number;
   };
   decision: {
     recommended_channel: RecommendedChannel;

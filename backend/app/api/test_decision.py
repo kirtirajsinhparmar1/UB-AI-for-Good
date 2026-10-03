@@ -32,9 +32,7 @@ def _post_decision(client, **overrides):
     data = {
         "vehicle_id": "vehicle-a",
         "base_wholesale_value": "15000",
-        "copart_expected_gross": "11000",
-        "acv_costs": "500",
-        "copart_costs": "700",
+        "copart_expected_gross": "14200",
     }
     data.update(overrides)
     return client.post(
@@ -72,8 +70,11 @@ def test_clean_scenario_routes_to_acv_with_prototype_policy_and_cleanup(monkeypa
     assert result["valuation"]["adjusted_wholesale_value"] == 15048.75
     assert result["valuation"]["policy_type"] == "prototype_demo_policy"
     assert "empirical calibration" in result["disclaimer"]
-    assert result["economics"]["acv_expected_net"] == 14548.75
-    assert result["economics"]["copart_expected_net"] == 10300
+    assert result["economics"] == {
+        "acv_expected_value": 15048.75,
+        "copart_expected_value": 14200,
+        "value_difference": -848.75,
+    }
     assert result["decision"]["recommended_channel"] == "ACV"
     assert len(captured_paths) == 1
     assert not captured_paths[0].exists()
@@ -86,7 +87,7 @@ def test_high_acoustic_risk_scenario_routes_to_copart(monkeypatch) -> None:
     with TestClient(api.app) as client:
         response = _post_decision(
             client,
-            copart_expected_gross="15000",
+            copart_expected_gross="14200",
         )
 
     assert response.status_code == 200
@@ -95,22 +96,25 @@ def test_high_acoustic_risk_scenario_routes_to_copart(monkeypatch) -> None:
     assert result["acoustic"]["risk_band"] == "high"
     assert result["valuation"]["acoustic_delta_amount"] == -2040
     assert result["valuation"]["adjusted_wholesale_value"] == 12960
+    assert result["economics"]["acv_expected_value"] == 12960
+    assert result["economics"]["copart_expected_value"] == 14200
+    assert result["economics"]["value_difference"] == 1240
     assert result["decision"]["recommended_channel"] == "COPART"
 
 
-def test_narrow_net_difference_routes_to_review(monkeypatch) -> None:
+def test_narrow_value_difference_routes_to_review(monkeypatch) -> None:
     monkeypatch.setattr(
         decision_service, "analyze_knock", lambda _path: _knock_result(0.27)
     )
     with TestClient(api.app) as client:
         response = _post_decision(
             client,
-            copart_expected_gross="15498.75",
+            copart_expected_gross="15298.75",
         )
 
     assert response.status_code == 200
     result = response.json()
-    assert result["economics"]["net_difference"] == 250
+    assert result["economics"]["value_difference"] == 250
     assert result["decision"]["recommended_channel"] == "REVIEW"
     assert result["decision"]["decision_strength"] == "weak"
 

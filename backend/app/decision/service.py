@@ -27,8 +27,6 @@ def analyze_decision(
     vehicle_id: str,
     base_wholesale_value: float,
     copart_expected_gross: float,
-    acv_costs: float = 0,
-    copart_costs: float = 0,
     minimum_switch_advantage: float = 500,
 ) -> DecisionResponse:
     """Run one full decision from a validated local WAV and supplied estimates."""
@@ -39,10 +37,8 @@ def analyze_decision(
         acoustic_risk_score=score.acoustic_risk_score,
     )
     route = route_vehicle(
-        acv_expected_gross=value_delta.adjusted_wholesale_value,
-        copart_expected_gross=copart_expected_gross,
-        acv_costs=acv_costs,
-        copart_costs=copart_costs,
+        acv_expected_value=value_delta.adjusted_wholesale_value,
+        copart_expected_value=copart_expected_gross,
         minimum_switch_advantage=minimum_switch_advantage,
     )
 
@@ -63,13 +59,9 @@ def analyze_decision(
             policy_note=value_delta.policy_note,
         ),
         economics=DecisionEconomics(
-            acv_expected_gross=route.acv_expected_gross,
-            acv_costs=route.acv_costs,
-            acv_expected_net=route.acv_expected_net,
-            copart_expected_gross=route.copart_expected_gross,
-            copart_costs=route.copart_costs,
-            copart_expected_net=route.copart_expected_net,
-            net_difference=route.net_difference,
+            acv_expected_value=route.acv_expected_value,
+            copart_expected_value=route.copart_expected_value,
+            value_difference=route.value_difference,
         ),
         decision=DecisionRecommendation(
             recommended_channel=route.recommended_channel,

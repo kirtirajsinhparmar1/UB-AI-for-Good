@@ -19,8 +19,6 @@ interface IntakeSectionProps {
 const economicFields: { key: keyof EconomicInputs; label: string; min: number }[] = [
   { key: 'baseWholesaleValue', label: 'Base wholesale value', min: 0.01 },
   { key: 'copartExpectedGross', label: 'Copart expected gross', min: 0 },
-  { key: 'acvCosts', label: 'ACV costs', min: 0 },
-  { key: 'copartCosts', label: 'Copart costs', min: 0 },
   { key: 'minimumSwitchAdvantage', label: 'Switch advantage', min: 0 },
 ];
 
@@ -131,7 +129,7 @@ export const IntakeSection: React.FC<IntakeSectionProps> = ({
           <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Disposition Economics</span>
           <span className="text-[11px] text-slate-400 font-mono">Same defaults for both demo samples</span>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {economicFields.map(({ key, label, min }) => (
             <label key={key} className="text-[11px] text-slate-400 font-semibold space-y-1">
               <span className="block">{label}</span>

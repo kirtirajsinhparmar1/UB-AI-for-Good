@@ -10,8 +10,6 @@ export const SAMPLE_VEHICLES: Vehicle[] = [
 const DEFAULT_ECONOMICS: EconomicInputs = {
   baseWholesaleValue: 15000,
   copartExpectedGross: 14200,
-  acvCosts: 500,
-  copartCosts: 700,
   minimumSwitchAdvantage: 500,
 };
 
