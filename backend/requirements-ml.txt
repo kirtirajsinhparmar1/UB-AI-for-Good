@@ -1,0 +1,5 @@
+torch>=2.1,<2.9
+torchaudio>=2.1,<2.9
+transformers>=4.56.1,<5
+numpy>=1.23
+soundfile>=0.12
