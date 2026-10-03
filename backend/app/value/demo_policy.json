@@ -1,0 +1,13 @@
+{
+  "version": "demo-v1",
+  "policy_type": "prototype_demo_policy",
+  "note": "Illustrative hackathon policy. Replace with empirically calibrated ACV/Copart historical outcomes in production.",
+  "breakpoints": [
+    {"risk_score": 0, "delta_pct": 1.0},
+    {"risk_score": 20, "delta_pct": 0.5},
+    {"risk_score": 40, "delta_pct": 0.0},
+    {"risk_score": 60, "delta_pct": -3.0},
+    {"risk_score": 80, "delta_pct": -8.0},
+    {"risk_score": 100, "delta_pct": -15.0}
+  ]
+}
