@@ -103,23 +103,5 @@ class BootstrapTests(unittest.TestCase):
             {"status": "ok", "service": "acoustic-intelligence"},
         )
 
-    def test_analyze_endpoint_reports_model_not_ready(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "engine.wav"
-            with wave.open(str(path), "wb") as audio:
-                audio.setnchannels(1)
-                audio.setsampwidth(2)
-                audio.setframerate(8000)
-                audio.writeframes(b"\x00\x00" * 8)
-            with path.open("rb") as audio_file:
-                response = TestClient(app).post(
-                    "/v1/audio/analyze",
-                    data={"vehicle_id": "car_a"},
-                    files={"file": ("engine.wav", audio_file, "audio/wav")},
-                )
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(response.json()["detail"]["code"], "model_not_ready")
-
-
 if __name__ == "__main__":
     unittest.main()

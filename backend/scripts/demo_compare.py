@@ -180,7 +180,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     comparison = ComparisonResponse.from_results(results)
     if args.json:
-        print(comparison.json())
+        print(comparison.model_dump_json())
     else:
         _print_table(comparison)
     return 0
