@@ -2,12 +2,16 @@
 
 from pathlib import Path
 import os
+import math
 from tempfile import NamedTemporaryFile
 from typing import List
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.self_inspection_router import router as self_inspection_router
+from app.decision.models import DecisionResponse
+from app.decision.service import analyze_decision
 from app.model import ModelNotReadyError
 from app.model.anomaly_model import analyze_anomaly
 from app.model.audio_io import AudioValidationError, validate_wav
@@ -36,6 +40,7 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+app.include_router(self_inspection_router)
 
 
 @app.get("/health", description="Lightweight service check; does not load or run models.")
@@ -162,6 +167,111 @@ def _validated_vehicle_id(vehicle_id: str) -> str:
             detail={"code": "invalid_vehicle_id", "message": "vehicle_id must not be empty."},
         )
     return normalized
+
+
+def _validated_decision_value(value: float, field: str, *, allow_zero: bool) -> float:
+    valid = math.isfinite(value) and (value >= 0 if allow_zero else value > 0)
+    if not valid:
+        code = {
+            "base_wholesale_value": "invalid_base_wholesale_value",
+            "copart_expected_gross": "invalid_copart_expected_gross",
+            "acv_costs": "invalid_acv_costs",
+            "copart_costs": "invalid_copart_costs",
+            "minimum_switch_advantage": "invalid_minimum_switch_advantage",
+        }[field]
+        qualifier = "nonnegative" if allow_zero else "greater than zero"
+        raise HTTPException(
+            status_code=400,
+            detail={"code": code, "message": f"{field} must be a finite value {qualifier}."},
+        )
+    return value
+
+
+@app.post(
+    "/v1/decision/analyze",
+    response_model=DecisionResponse,
+    summary="Analyze engine audio and recommend a disposition channel",
+    description=(
+        "Upload a WAV file and caller-supplied value estimates. The local knock model, "
+        "prototype Acoustic Value Delta policy, and ACV/Copart router produce one decision."
+    ),
+    responses={
+        400: {"description": "Vehicle, audio, or economic inputs are invalid."},
+        413: {"description": "The WAV file exceeds the upload size limit."},
+        422: {"description": "A required multipart field is missing or malformed."},
+        503: {"description": "Required local knock inference is not ready."},
+    },
+)
+def decision_analyze(
+    vehicle_id: str = Form(...),
+    audio_file: UploadFile = File(...),
+    base_wholesale_value: float = Form(...),
+    copart_expected_gross: float = Form(...),
+    acv_costs: float = Form(0),
+    copart_costs: float = Form(0),
+    minimum_switch_advantage: float = Form(500),
+) -> DecisionResponse:
+    normalized_vehicle_id = _validated_vehicle_id(vehicle_id)
+    base_wholesale_value = _validated_decision_value(
+        base_wholesale_value, "base_wholesale_value", allow_zero=False
+    )
+    copart_expected_gross = _validated_decision_value(
+        copart_expected_gross, "copart_expected_gross", allow_zero=True
+    )
+    acv_costs = _validated_decision_value(acv_costs, "acv_costs", allow_zero=True)
+    copart_costs = _validated_decision_value(
+        copart_costs, "copart_costs", allow_zero=True
+    )
+    minimum_switch_advantage = _validated_decision_value(
+        minimum_switch_advantage, "minimum_switch_advantage", allow_zero=True
+    )
+
+    audio_path = _save_upload(audio_file)
+    try:
+        try:
+            validate_wav(str(audio_path))
+        except AudioValidationError as error:
+            raise _invalid_audio(str(error)) from error
+
+        try:
+            return analyze_decision(
+                audio_path=audio_path,
+                vehicle_id=normalized_vehicle_id,
+                base_wholesale_value=base_wholesale_value,
+                copart_expected_gross=copart_expected_gross,
+                acv_costs=acv_costs,
+                copart_costs=copart_costs,
+                minimum_switch_advantage=minimum_switch_advantage,
+            )
+        except ModelNotReadyError as error:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "model_not_ready",
+                    "component": "knock_model",
+                    "message": str(error) or "Knock inference model is unavailable.",
+                },
+            ) from error
+        except (TypeError, ValueError) as error:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "invalid_model_output",
+                    "component": "decision_analysis",
+                    "message": "The model or decision modules returned invalid values.",
+                },
+            ) from error
+        except Exception as error:
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "decision_analysis_failed",
+                    "component": "decision_analysis",
+                    "message": "The disposition decision could not be completed.",
+                },
+            ) from error
+    finally:
+        audio_path.unlink(missing_ok=True)
 
 
 @app.post(
